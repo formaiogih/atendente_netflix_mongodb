@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Converse com o assistente da Netflix</title>
     <link rel="stylesheet" type="text/css" href="css/index.css" media="screen" />
+    <link type="text/js" href="js/index.js" />
     <script type="importmap">
         {
           "imports": {
@@ -33,11 +34,8 @@
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
         const API_KEY = "AIzaSyDfs7FU2fvYRhu_KyUTh3WrvxOYXjqHY5g";
-
         const genAI = new GoogleGenerativeAI(API_KEY);
-
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 
         document.getElementById('prompt').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
@@ -64,10 +62,16 @@
                 resposta.innerText = `Assistente: ${text}`;
                 conversaDiv.appendChild(resposta);
 
+                // await salvarMensagem(textoPrompt, text);
+
             } catch (error) {
                 console.error('Error:', error);
                 const erroMsg = document.createElement('p');
-                erroMsg.innerText = 'Erro ao buscar resposta do assistente';
+                if (error.message.includes('SAFETY')) {
+                    erroMsg.innerText = 'A resposta gerada foi bloqueada por razões de segurança.';
+                } else {
+                    erroMsg.innerText = 'Erro ao buscar resposta do assistente';
+                }
                 conversaDiv.appendChild(erroMsg);
             }
 
@@ -76,6 +80,28 @@
 
             document.getElementById('prompt').value = '';
         }
+
+        // async function salvarMensagem(user, assistant) {
+        //     try {
+        //         const response = await fetch('http://localhost:3000/messages', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json'
+        //             },
+        //             body: JSON.stringify({ user, assistant })
+        //         });
+        //         if (response.ok) {
+        //             console.log('Mensagem salva com sucesso');
+        //         } else {
+        //             console.error('Erro ao salvar mensagem:', response.statusText);
+        //         }
+        //     } catch (error) {
+        //         console.error('Erro ao salvar mensagem:', error);
+        //     }
+        // }
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
