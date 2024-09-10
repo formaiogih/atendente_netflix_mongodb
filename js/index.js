@@ -1,19 +1,18 @@
 import express from 'express';
 import { connect, Schema, model } from 'mongoose';
 import pkg from 'body-parser';
-import cors from 'cors';
-const pag = express()
-pag.use(cors())
+// import cors from 'cors';
+// const pag = express()
+// pag.use(cors())
 // import axios from 'axios';
-
-const { json } = pkg;
+import mongoose from 'mongoose';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(json());
 
-connect('mongodb+srv://Giovanna:megsnoop23@netflixai.muxslkg.mongodb.net/netflixaiDB?retryWrites=true&w=majority&appName=Netflixai')
+connect('mongodb+srv://Giovanna:megsnoop23@netflixai.muxslkg.mongodb.net/netflixaiDB?retryWrites=true&w=majority')
     .then(() => {
         console.log('Conectado ao MongoDB Atlas');
     })
@@ -48,5 +47,3 @@ app.post('/api/saveChatHistory', async (req, res) => {
         res.status(500).send('Erro ao salvar o histórico');
     }
 });
-
-

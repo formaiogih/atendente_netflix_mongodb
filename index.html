@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Converse com o assistente da Netflix</title>
     <link rel="stylesheet" type="text/css" href="css/index.css" media="screen" />
-    <script src="scripts/index.js" type="text/js"></script>
+    <script src="js/index.js" type="text/js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script type="importmap">
         {
@@ -56,10 +56,23 @@
 
             if (userMessage) {
                 // Exibir a mensagem do usuário
+
                 const conversa = document.getElementById('conversa');
                 const userMessageElem = document.createElement('p');
-                userMessageElem.textContent = `Você: ${userMessage}`;
+
+                // Criar um elemento para o texto em negrito
+                const boldTexto = document.createElement('strong');
+                boldTexto.textContent = 'Você:';
+
+                // Criar um elemento para o restante da mensagem
+                const normalTexto = document.createTextNode(` ${userMessage}`);
+
+                // Adicionar os elementos ao parágrafo
+                userMessageElem.appendChild(boldTexto);
+                userMessageElem.appendChild(normalTexto);
+
                 conversa.appendChild(userMessageElem);
+
 
                 // Enviar para o modelo de IA
                 const chatSession = model.startChat({
@@ -68,9 +81,15 @@
                         {
                             role: "user",
                             parts: [
-                                { text: "Você é um atendente da Netflix e pode falar sobre filmes e séries presentes na plataforma Netflix. Responda apenas perguntas relacionadas a isso." },
+                                { text: "Você é um atendente da Netflix e pode falar sobre filmes e séries presentes na plataforma Netflix. Responda apenas perguntas relacionadas a isso (não use letras em negrito)." },
                             ],
                         },
+                        {
+                            role: "user",
+                            parts: [
+                                { text: userMessage },
+                            ],
+                        }
                     ],
                 });
 
@@ -84,12 +103,20 @@
                 const result = await chatSession.sendMessage(userMessage);
                 const botMessage = result.response.text();
 
-                // Exibir a resposta do bot
+
                 const botMessageElem = document.createElement('p');
-                botMessageElem.textContent = `Assistente: ${botMessage}`;
+
+                const boldText = document.createElement('strong');
+                boldText.textContent = 'Assistente:';
+
+                const normalText = document.createTextNode(` ${botMessage}`);
+
+
+                botMessageElem.appendChild(boldText);
+                botMessageElem.appendChild(normalText);
+
                 conversa.appendChild(botMessageElem);
 
-                // Enviar a mensagem para o backend para salvar no MongoDB
                 try {
                     await axios.post('http://localhost:3000/api/saveChatHistory', {
                         user: "Usuário",
