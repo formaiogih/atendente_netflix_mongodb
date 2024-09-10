@@ -68,11 +68,18 @@
                         {
                             role: "user",
                             parts: [
-                                { text: "Você é um atendente da Netflix e pode falar sobre filmes e séries presentes na plataforma Netflix\n" },
+                                { text: "Você é um atendente da Netflix e pode falar sobre filmes e séries presentes na plataforma Netflix. Responda apenas perguntas relacionadas a isso." },
                             ],
                         },
                     ],
                 });
+
+                const resultado = await chatSession.sendMessage(userMessage);
+
+                if (resultado?.safetyAttributes?.blocked) {
+                    console.error('Mensagem bloqueada devido a política de segurança');
+                    return;
+                }
 
                 const result = await chatSession.sendMessage(userMessage);
                 const botMessage = result.response.text();
@@ -88,10 +95,12 @@
                         user: "Usuário",
                         message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`
                     });
+
                     console.log('Histórico salvo com sucesso');
                 } catch (error) {
                     console.error('Erro ao salvar o histórico:', error);
                 }
+
 
                 // Limpar o campo de entrada
                 promptInput.value = '';
