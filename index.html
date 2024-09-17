@@ -126,13 +126,28 @@
                     console.log('Histórico salvo com sucesso');
                 } catch (error) {
                     console.error('Erro ao salvar o histórico:', error);
-                }
-
-
-                // Limpar o campo de entrada
-                promptInput.value = '';
+                } promptInput.value = '';
             }
         });
+
+//                 try {
+//     // Chamada para o endpoint logConversa
+//     const response = await axios.post('http://localhost:3000/logConversa', {
+//       userId: 'seu_usuario_id', // Substitua por um ID de usuário real
+//       message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`
+//     });
+//     console.log('Conversa registrada com sucesso:', response.data);
+
+//     // Chamada para o endpoint logAcesso (opcional, se você quiser registrar cada acesso)
+//     await axios.post('http://localhost:3000/logAcesso', {
+//       userId: 'seu_usuario_id',
+//       ip: 'seu_ip' // Substitua por uma função para obter o IP do usuário
+//     });
+//     console.log('Acesso registrado com sucesso');
+//   } catch (error) {
+//     console.error('Erro ao registrar a conversa:', error);
+//   }
+               
     </script>
 </body>
 
