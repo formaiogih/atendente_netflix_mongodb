@@ -95,6 +95,14 @@
 
                 const resultado = await chatSession.sendMessage(userMessage);
 
+               if (resultado?.safetyAttributes?.blocked) {
+                    console.error('Mensagem bloqueada devido a política de segurança');
+                    const errorMessageElem = document.createElement('p');
+                    errorMessageElem.textContent = 'Desculpe, não posso ajudar com essa pergunta.';
+                    conversa.appendChild(errorMessageElem);
+                    return;
+                }
+
                 if (resultado?.safetyAttributes?.blocked) {
                     console.error('Mensagem bloqueada devido a política de segurança');
                     return;
