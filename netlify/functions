@@ -1,0 +1,36 @@
+const mongoose = require('mongoose');
+
+// Conexão ao MongoDB
+const uri = "sua_url_do_mongodb_aqui"; // Substitua pela sua URL do MongoDB
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const chatSchema = new mongoose.Schema({
+    user: String,
+    message: String,
+    timestamp: { type: Date, default: Date.now }
+});
+const ChatHistory = mongoose.model('ChatHistory', chatSchema);
+
+exports.handler = async (event, context) => {
+    if (event.httpMethod === 'POST') {
+        const { user, message } = JSON.parse(event.body);
+        try {
+            const chatEntry = new ChatHistory({ user, message });
+            await chatEntry.save();
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: 'Histórico salvo com sucesso!' }),
+            };
+        } catch (error) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ message: 'Erro ao salvar o histórico', error }),
+            };
+        }
+    }
+
+    return {
+        statusCode: 405,
+        body: JSON.stringify({ message: 'Método não permitido' }),
+    };
+};
