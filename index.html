@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Converse com o assistente da Netflix</title>
     <link rel="stylesheet" type="text/css" href="css/index.css" media="screen" />
-    <script src="js/index.js" type="text/js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script type="importmap">
         {
-          "imports": {
-            "@google/generative-ai": "https://esm.run/@google/generative-ai"
-          }
+            "imports": {
+                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
         }
     </script>
 </head>
@@ -21,19 +20,21 @@
     <header>
         <h1>Converse com o assistente da Netflix!</h1>
     </header>
-    <form>
-        <div id="triangulocima"></div>
-        <article id="conversa"></article>
+    <form id="chat-form">
+        <div id="conversa"></div>
+
         <p>
             Digite sua consulta:
             <input class="escrever" type="text" id="prompt" name="prompt" required="required"><br>
         </p>
-        <div id="triangulobaixo"></div>
-    </form>
-    <script type="module">
-        import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-        const apiKey = "AIzaSyDfs7FU2fvYRhu_KyUTh3WrvxOYXjqHY5g";
+        <button type="submit" id="botao">Enviar</button>
+    </form>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        const apiKey = "AIzaSyDfs7FU2fvYRhu_KyUTh3WrvxOYXjqHY5g"; 
         const genAI = new GoogleGenerativeAI(apiKey);
 
         const model = genAI.getGenerativeModel({
@@ -48,114 +49,69 @@
             responseMimeType: "text/plain",
         };
 
-        document.querySelector('form').addEventListener('submit', async (e) => {
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const promptInput = document.getElementById('prompt');
             const userMessage = promptInput.value.trim();
 
             if (userMessage) {
-                // Exibir a mensagem do usuário
-
                 const conversa = document.getElementById('conversa');
                 const userMessageElem = document.createElement('p');
-
-                // Criar um elemento para o texto em negrito
-                const boldTexto = document.createElement('strong');
-                boldTexto.textContent = 'Você:';
-
-                // Criar um elemento para o restante da mensagem
-                const normalTexto = document.createTextNode(` ${userMessage}`);
-
-                // Adicionar os elementos ao parágrafo
-                userMessageElem.appendChild(boldTexto);
-                userMessageElem.appendChild(normalTexto);
-
+                userMessageElem.textContent = `Você: ${userMessage}`;
                 conversa.appendChild(userMessageElem);
 
-
-                // Enviar para o modelo de IA
                 const chatSession = model.startChat({
                     generationConfig,
                     history: [
                         {
                             role: "user",
                             parts: [
-                                { text: "Você é um atendente da Netflix e pode falar sobre filmes e séries presentes na plataforma Netflix. Responda apenas perguntas relacionadas a isso (não use letras em negrito)." },
+                                { text: "Sua instrução é ser um atendente da Netflix. Pode falar sobre filmes e séries presentes na plataforma Netflix. Não use '*' para deixar o texto em negrito. Se quiser destacar alguma palavra, deixa todas as letras dela em maiúsculo." },
                             ],
                         },
                         {
                             role: "user",
-                            parts: [
-                                { text: userMessage },
-                            ],
+                            parts: [{ text: userMessage }],
                         }
                     ],
                 });
 
                 const resultado = await chatSession.sendMessage(userMessage);
 
-               if (resultado?.safetyAttributes?.blocked) {
-                    console.error('Mensagem bloqueada devido a política de segurança');
-                    const errorMessageElem = document.createElement('p');
-                    errorMessageElem.textContent = 'Desculpe, não posso ajudar com essa pergunta.';
-                    conversa.appendChild(errorMessageElem);
-                    return;
+                async function getUserInfo() {
+                    try {
+                        const response = await axios.get('http://localhost:3000/api/userInfo');
+                        const { ip, city, state, country } = response.data; 
+                        console.log(`IP: ${ip}, Cidade: ${city}, Estado: ${state}, País: ${country}`);
+                        return { ip, city, state, country }; 
+                    } catch (error) {
+                        console.error('Erro ao recuperar informações do usuário:', error);
+                        return null; 
+                    }
                 }
 
-                if (resultado?.safetyAttributes?.blocked) {
-                    console.error('Mensagem bloqueada devido a política de segurança');
-                    return;
-                }
+                const userInfo = await getUserInfo();
 
-                const result = await chatSession.sendMessage(userMessage);
-                const botMessage = result.response.text();
-
-
+                const botMessage = resultado.response.text();
                 const botMessageElem = document.createElement('p');
-
-                const boldText = document.createElement('strong');
-                boldText.textContent = 'Assistente:';
-
-                const normalText = document.createTextNode(` ${botMessage}`);
-
-
-                botMessageElem.appendChild(boldText);
-                botMessageElem.appendChild(normalText);
-
+                botMessageElem.textContent = `Assistente: ${botMessage}`;
                 conversa.appendChild(botMessageElem);
 
                 try {
                     await axios.post('http://localhost:3000/api/saveChatHistory', {
                         user: "Usuário",
-                        message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`
+                        message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`,
+                        userInfo 
                     });
-
                     console.log('Histórico salvo com sucesso');
                 } catch (error) {
                     console.error('Erro ao salvar o histórico:', error);
-                } promptInput.value = '';
+                }
+
+                promptInput.value = ''; 
             }
         });
-
-//                 try {
-//     // Chamada para o endpoint logConversa
-//     const response = await axios.post('http://localhost:3000/logConversa', {
-//       userId: 'seu_usuario_id', // Substitua por um ID de usuário real
-//       message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`
-//     });
-//     console.log('Conversa registrada com sucesso:', response.data);
-
-//     // Chamada para o endpoint logAcesso (opcional, se você quiser registrar cada acesso)
-//     await axios.post('http://localhost:3000/logAcesso', {
-//       userId: 'seu_usuario_id',
-//       ip: 'seu_ip' // Substitua por uma função para obter o IP do usuário
-//     });
-//     console.log('Acesso registrado com sucesso');
-//   } catch (error) {
-//     console.error('Erro ao registrar a conversa:', error);
-//   }
-               
     </script>
 </body>
 
