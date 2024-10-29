@@ -46,6 +46,11 @@ app.get('/api/userInfo', async (req, res) => {
     }
 });
 
+app.get('/ ', async (req, res) => {
+    res.status(200).send('Enviado com sucesso');
+});
+
+
 app.post('/api/saveChatHistory', async (req, res) => {
     try {
         console.log('Dados recebidos no corpo da requisição:', req.body);
