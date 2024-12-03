@@ -7,6 +7,8 @@
     <title>Converse com o assistente da Netflix</title>
     <link rel="stylesheet" type="text/css" href="css/index.css" media="screen" />
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/cliente.js"></script>
     <script type="importmap">
         {
             "imports": {
@@ -34,82 +36,99 @@
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        const apiKey = "AIzaSyDfs7FU2fvYRhu_KyUTh3WrvxOYXjqHY5g"; 
+        const apiKey = "AIzaSyDfs7FU2fvYRhu_KyUTh3WrvxOYXjqHY5g"; // Coloque aqui sua chave API
         const genAI = new GoogleGenerativeAI(apiKey);
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-flash-8b",
         });
+
+        var history = [
+            {
+                role: "user",
+                parts: [
+                    { text: "Sua instrução é ser um atendente da Netflix. Pode falar sobre filmes e séries presentes na plataforma Netflix. Não use '*' para deixar o texto em negrito. Se quiser destacar alguma palavra, deixa todas as letras dela em maiúsculo." },
+                ],
+            }
+        ];
 
         const generationConfig = {
             temperature: 1,
             topP: 0.95,
-            topK: 64,
+            topK: 40,
             maxOutputTokens: 8192,
             responseMimeType: "text/plain",
         };
 
         document.getElementById('chat-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Impede o recarregamento da página
 
             const promptInput = document.getElementById('prompt');
             const userMessage = promptInput.value.trim();
 
             if (userMessage) {
+                // Exibir apenas a mensagem do usuário
                 const conversa = document.getElementById('conversa');
                 const userMessageElem = document.createElement('p');
                 userMessageElem.textContent = `Você: ${userMessage}`;
                 conversa.appendChild(userMessageElem);
 
+                // Enviar para o modelo de IA
                 const chatSession = model.startChat({
                     generationConfig,
-                    history: [
-                        {
-                            role: "user",
-                            parts: [
-                                { text: "Sua instrução é ser um atendente da Netflix. Pode falar sobre filmes e séries presentes na plataforma Netflix. Não use '*' para deixar o texto em negrito. Se quiser destacar alguma palavra, deixa todas as letras dela em maiúsculo." },
-                            ],
-                        },
-                        {
-                            role: "user",
-                            parts: [{ text: userMessage }],
-                        }
+                    history
+                });
+
+                history.push({
+                    role: "user",  // Agora é a resposta do assistente
+                    parts: [
+                        { text: userMessage },  // Resposta do assistente
                     ],
                 });
 
                 const resultado = await chatSession.sendMessage(userMessage);
 
+                // Função para obter informações do usuário
                 async function getUserInfo() {
                     try {
                         const response = await axios.get('http://localhost:3000/api/userInfo');
-                        const { ip, city, state, country } = response.data; 
+                        const { ip, city, state, country } = response.data; // Inclui país
                         console.log(`IP: ${ip}, Cidade: ${city}, Estado: ${state}, País: ${country}`);
-                        return { ip, city, state, country }; 
+                        return { ip, city, state, country }; // Retorna as informações
                     } catch (error) {
                         console.error('Erro ao recuperar informações do usuário:', error);
-                        return null; 
+                        return null; // Retorna null em caso de erro
                     }
                 }
 
                 const userInfo = await getUserInfo();
 
                 const botMessage = resultado.response.text();
+
+                history.push({
+                    role: "model",  // Agora é a resposta do assistente
+                    parts: [
+                        { text: botMessage },  // Resposta do assistente
+                    ],
+                });
+
                 const botMessageElem = document.createElement('p');
                 botMessageElem.textContent = `Assistente: ${botMessage}`;
                 conversa.appendChild(botMessageElem);
 
+                // Salvar histórico sem exibir
                 try {
-                    await axios.post('http://localhost:3000/api/saveChatHistory', {
-                        user: "Usuário",
+                    await axios.post('http://localhost:3000/api/saveHistory', {
+                        userId: "Usuário",
                         message: `Pergunta: ${userMessage}, Resposta: ${botMessage}`,
-                        userInfo 
+                        userInfo // Enviar userInfo como objeto
                     });
                     console.log('Histórico salvo com sucesso');
                 } catch (error) {
                     console.error('Erro ao salvar o histórico:', error);
                 }
 
-                promptInput.value = ''; 
+                promptInput.value = ''; // Limpar o campo de entrada
             }
         });
     </script>
